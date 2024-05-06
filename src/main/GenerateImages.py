@@ -1,3 +1,4 @@
+import plotly.graph_objects
 from torch.utils.data import DataLoader
 import numpy as np
 import torch
@@ -165,39 +166,51 @@ valueLocations = {
     "Payload_data_UNSW": "Dataset"
 }
 
+shorthand = {
+    "Payload_data_CICIDS2017": "CICIDS 2017",
+    "Payload_data_UNSW": "UNSW"
+}
+
 def traceLines(trace:plotly.graph_objs.Trace):
     """
     Changes the trace lines so the graphs are consistant.
     """
-    if trace.name == "Soft":
-        trace.update({"line":{"dash":'solid',"width":4}})
-    elif trace.name == "iiMod":
-        trace.update({"line":{"dash":"dashdot","width":4}})
-    elif trace.name == "COOL":
-        trace.update({"line":{"dash":"longdash","width":4}})
-    elif trace.name == "DOC":
-        trace.update({"line":{"dash":"dash","width":4}})
-    elif trace.name == "Energy":
-        trace.update({"line":{"dash":"dot","width":4}})
-    elif trace.name == "Open":
-        trace.update({"line":{"dash":"dot","width":4}})
+
+    if "CIC" in trace.name and trace.name not in "CIC":
+        # trace.update({"line":{"dash":'solid',"width":4}, "legendgroup":"CIC", "legendgrouptitle":{"text":"CIC"}})
+        trace.update({"line":{"dash":'solid',"width":4}, "legendgroup":"CIC", "legendgrouptitle":{"text":"Algorithm"}})
+    elif "UNSW" in trace.name and trace.name not in "UNSW":
+        trace.update({"line":{"dash":"dot","width":4}, "legendgroup":"UNSW", "legendgrouptitle":{"text":"UNSW"}, "showlegend":False})
+
+    if "Soft" in trace.name:
+        trace.update({"line":{"width":4,"color":"gray"}, "name":"Softmax"})
+    elif "iiMod" in trace.name:
+        trace.update({"line":{"width":4,"color":"pink"}, "name":"iiMod"})
+    elif "COOL" in trace.name:
+        trace.update({"line":{"width":4,"color":"blue"}, "name":"COOL"})
+    elif "DOC" in trace.name:
+        trace.update({"line":{"width":4,"color":"red"}, "name":"DOC"})
+    elif "Energy" in trace.name:
+        trace.update({"line":{"width":4,"color":"orange"}, "name":"Energy"})
+    elif "Open" in trace.name:
+        trace.update({"line":{"width":4,"color":"green"}, "name":"OpenMax"})
     else:
-        trace.update({"line":{"dash":'solid',"width":4}})
-    
-    if trace.name == "Soft":
-        trace.update({"marker":{"symbol":'circle',"size":8}})
-    elif trace.name == "iiMod":
-        trace.update({"marker":{"symbol":'square',"size":8}})
-    elif trace.name == "COOL":
-        trace.update({"marker":{"symbol":'x',"size":8}})
-    elif trace.name == "DOC":
-        trace.update({"marker":{"symbol":'cross',"size":8}})
-    elif trace.name == "Energy":
-        trace.update({"marker":{"symbol":'diamond',"size":8}})
-    elif trace.name == "Open":
-        trace.update({"marker":{"symbol":'star-open',"size":8}})
+        trace.update({"line":{"width":4,"color":"black"}})
+
+    if "Soft" in trace.name:
+        trace.update({"marker":{"symbol":'circle',"size":8,"color":"gray"}})
+    elif "iiMod" in trace.name:
+        trace.update({"marker":{"symbol":'square',"size":8,"color":"pink"}})
+    elif "COOL" in trace.name:
+        trace.update({"marker":{"symbol":'x',"size":8,"color":"blue"}})
+    elif "DOC" in trace.name:
+        trace.update({"marker":{"symbol":'cross',"size":8,"color":"red"}})
+    elif "Energy" in trace.name:
+        trace.update({"marker":{"symbol":'diamond',"size":8,"color":"orange"}})
+    elif "Open" in trace.name:
+        trace.update({"marker":{"symbol":'star-open',"size":8,"color":"green"}})
     else:
-        trace.update({"marker":{"symbol":'circle-x',"size":8}})
+        trace.update({"marker":{"symbol":'circle-x',"size":8,"color":"black"}})
 
 def keepFirstThree(df:pd.DataFrame):
     """
@@ -254,6 +267,9 @@ def main(save=True,show=False, minimumVersion=None, bysection=False, latex=False
         part_tabel = whole_table[whole_table[valueLocations[z1]]==z1].copy()
         for z2 in ["Payload_data_CICIDS2017","Payload_data_UNSW"]:
             part_tabel2 = part_tabel[part_tabel[valueLocations[z2]]==z2].copy()
+
+            whole_table.loc[whole_table[valueLocations[z2]]==z2, "OOD Type"] = whole_table.loc[whole_table[valueLocations[z2]]==z2, "OOD Type"].apply(lambda x: x+f" {shorthand[z2]}" if shorthand[z2] not in x else x)
+
             counts = part_tabel2["Currently Modifying"].value_counts()
             if counts.min() != counts.max():
                 print(f"{z1}-{z2} has an unbalenced number of samples, {counts.min()}!={counts.max()}")
@@ -262,7 +278,7 @@ def main(save=True,show=False, minimumVersion=None, bysection=False, latex=False
 
 
     whole_table[whole_table[valueLocations["Convolutional"]]=="Convolutional"]
-    whole_table[whole_table[valueLocations["Payload_data_CICIDS2017"]]=="Payload_data_CICIDS2017"]
+    # whole_table[whole_table[valueLocations["Payload_data_CICIDS2017"]]=="Payload_data_CICIDS2017"]
     graphTabel(whole_table,show=show,save=save,latex=latex)
 
     
@@ -284,15 +300,21 @@ def graphTabel(df:pd.DataFrame,show=False,save=True,latex=False,extrapath=""):
                     fig = px.scatter(part_table)
                 elif x in ["Datagrouping","Unknowns"]:
                     fig = px.line(part_table,markers=True)
+                    fig.add_trace(plotly.graph_objects.Scatter({"x":[0, 1], "y":[0, 1], "line":{"dash":'solid',"width":4}, "legendgroup":"Datasets", "legendgrouptitle":{"text":"Datasets"}, "name":"CIC", "visible":"legendonly", "showlegend":True}))
+                    fig.add_trace(plotly.graph_objects.Scatter({"x":[0, 1], "y":[0, 1], "line":{"dash":'dot',"width":4}, "legendgroup":"Datasets", "legendgrouptitle":{"text":"Datasets"}, "name":"UNSW", "visible":"legendonly", "showlegend":True}))
                 else:
                     fig = px.line(part_table,markers=True,log_x=True)
                     fig.update_xaxes(dtick=1)
+                    fig.add_trace(plotly.graph_objects.Scatter({"x":[0, 1], "y":[0, 1], "line":{"dash":'solid',"width":4}, "legendgroup":"Datasets", "legendgrouptitle":{"text":"Datasets"}, "name":"CIC", "visible":"legendonly", "showlegend":True}))
+                    fig.add_trace(plotly.graph_objects.Scatter({"x":[0, 1], "y":[0, 1], "line":{"dash":'dot',"width":4}, "legendgroup":"Datasets", "legendgrouptitle":{"text":"Datasets"}, "name":"UNSW", "visible":"legendonly", "showlegend":True}))
                 xaxis = x
                 if xaxis == "MaxPerClass":
                     xaxis = "Datapoints per class"
-                fig.update_layout(yaxis_title=renamed_y,xaxis_title=xaxis,paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="rgba(0,0,0,0)",font={"size":18,"color":"rgba(0,0,0,255)"},legend_title_text='Algorithm')
+                fig.update_layout(yaxis_title=renamed_y,xaxis_title=xaxis,paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="rgba(0,0,0,0)",font={"size":18,"color":"rgba(0,0,0,255)"},legend_title_text='')
                 fig.update_yaxes(range=[0, 1],gridcolor="rgba(200,200,200,50)",zerolinecolor="rgba(200,200,200,50)",zerolinewidth=1)
                 fig.update_xaxes(gridcolor="rgba(200,200,200,50)",zerolinecolor="rgba(200,200,200,50)",zerolinewidth=1,exponentformat='power')
+
+                
                     
                 fig.for_each_trace(traceLines)
 
