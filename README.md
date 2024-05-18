@@ -1,6 +1,11 @@
 ## OpenSetPerf
 A Practitioner's Guide to the Performance of Deep-Learning Based Open Set Recognition Algorithms for Network Intrusion Detection Systems
 
+### Steps to recreate graphs:
+- Clone the repository using the same steps as if you were running the whole test
+- Instead of running the model with `python3 src\main\main.py` run it with `python3 src\main\GenerateImages`
+- This will generate all of the images needed in the `Saves\images` directory. Do note that finding a specific image may be difficult.
+
 ### Steps to run:
 
 - Clone the repository using the following commands:
