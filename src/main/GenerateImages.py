@@ -227,6 +227,7 @@ def keepFirstThree(df:pd.DataFrame):
         df = pd.concat([df,temp])
         # print(f"The length is (should be more) {len(df)}")
         df.drop_duplicates(inplace=True,keep=False)
+    final.to_csv("testing_graph.csv")
     assert len(final)%3 ==0
     return final
 
@@ -277,9 +278,15 @@ def main(save=True,show=False, minimumVersion=None, bysection=False, latex=False
                 print(f"{z1}-{z2} was unable to find samples for graphs")
 
 
-    whole_table[whole_table[valueLocations["Convolutional"]]=="Convolutional"]
+    # whole_table[whole_table[valueLocations["Convolutional"]]=="Convolutional"]
     # whole_table[whole_table[valueLocations["Payload_data_CICIDS2017"]]=="Payload_data_CICIDS2017"]
-    graphTabel(whole_table,show=show,save=save,latex=latex)
+    # graphTabel(whole_table,show=show,save=save,latex=latex)
+    table_a = whole_table[whole_table[valueLocations["Fully_Connected"]]=="Fully_Connected"]
+    table_a = table_a[table_a["Type of modification"]!="Unknowns"]
+    graphTabel(table_a,show=show,save=save,latex=latex,extrapath="Main")
+    whole_table = whole_table[whole_table[valueLocations["Payload_data_CICIDS2017"]]=="Payload_data_CICIDS2017"]
+    graphTabel(whole_table[whole_table[valueLocations["Convolutional"]]=="Convolutional"],show=show,save=save,latex=latex,extrapath="Convolutional")
+    graphTabel(whole_table[whole_table[valueLocations["Fully_Connected"]]=="Fully_Connected"],show=show,save=save,latex=latex,extrapath="Fully_Connected")
 
     
     
@@ -293,7 +300,7 @@ def graphTabel(df:pd.DataFrame,show=False,save=True,latex=False,extrapath=""):
         for y, renamed_y in zip([f"Test_F1",f"Val_F1",f"Test_Found_Unknowns"], ["Test F1-Score", "Validation F1-Score", "Found Unknowns Percent"]):
             for x in set(df["Type of modification"]):
 
-                part_table = pd.pivot_table(df[df["Type of modification"]==x],values=f"{prefix}{y}",index=[f"{x}"],columns=["OOD Type"],aggfunc=np.mean)
+                part_table = pd.pivot_table(df[df["Type of modification"]==x],values=f"{prefix}{y}",index=[f"{x}"],columns=["OOD Type"],aggfunc="mean")
                 # print(part_table)
                 
                 if x in ["Activation"]:
@@ -310,6 +317,8 @@ def graphTabel(df:pd.DataFrame,show=False,save=True,latex=False,extrapath=""):
                 xaxis = x
                 if xaxis == "MaxPerClass":
                     xaxis = "Datapoints per class"
+                if xaxis == "Unknowns":
+                    xaxis = "Number of Unknown Classes"
                 fig.update_layout(yaxis_title=renamed_y,xaxis_title=xaxis,paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="rgba(0,0,0,0)",font={"size":18,"color":"rgba(0,0,0,255)"},legend_title_text='')
                 fig.update_yaxes(range=[0, 1],gridcolor="rgba(200,200,200,50)",zerolinecolor="rgba(200,200,200,50)",zerolinewidth=1)
                 fig.update_xaxes(gridcolor="rgba(200,200,200,50)",zerolinecolor="rgba(200,200,200,50)",zerolinewidth=1,exponentformat='power')
